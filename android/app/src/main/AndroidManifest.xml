@@ -35,5 +35,9 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+      <!-- Note : le service de lecture en arrière-plan de react-native-track-player
+           (MusicService) est déclaré automatiquement par la librairie elle-même
+           via son propre AndroidManifest.xml (merge Gradle). Pas besoin de le
+           redéclarer ici — ça créerait un risque de conflit de merge. -->
     </application>
 </manifest>
