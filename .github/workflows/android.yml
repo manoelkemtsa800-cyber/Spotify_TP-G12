@@ -30,14 +30,14 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Create env.ts from GitHub Secrets
-        run: npm install --legacy-peer-deps
+        run: npm install 
           cat > src/config/env.ts << 'ENVEOF'
           export const SUPABASE_URL = '${{ secrets.SUPABASE_URL }}';
           export const SUPABASE_ANON_KEY = '${{ secrets.SUPABASE_ANON_KEY }}';
           ENVEOF
 
       - name: Install npm dependencies (patch-package auto-applied)
-        run:
+        run: npm install --legacy-peer-deps
 
       - name: Grant execute permission to gradlew
         run: chmod +x android/gradlew
