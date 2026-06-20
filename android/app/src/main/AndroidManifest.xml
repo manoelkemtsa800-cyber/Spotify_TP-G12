@@ -2,6 +2,19 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Lecture de la musique locale sur le téléphone -->
+    <!-- Android 13+ (API 33+) : permission granulaire pour les fichiers audio -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <!-- Android 12 et moins (API <= 32) : ancienne permission de stockage -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- Lecture en arrière-plan via react-native-track-player -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
       android:name=".MainApplication"
       android:label="@string/app_name"
@@ -22,5 +35,9 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+      <!-- Note : le service de lecture en arrière-plan de react-native-track-player
+           (MusicService) est déclaré automatiquement par la librairie elle-même
+           via son propre AndroidManifest.xml (merge Gradle). Pas besoin de le
+           redéclarer ici — ça créerait un risque de conflit de merge. -->
     </application>
 </manifest>
