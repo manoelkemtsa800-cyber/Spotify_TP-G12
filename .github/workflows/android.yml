@@ -1,52 +1,39 @@
 name: Build Android APK
-
 on:
   push:
     branches:
       - main
   workflow_dispatch:
-
 jobs:
   build-android:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
-
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-
       - name: Create env.ts from GitHub Secrets
-        run: npm install 
-          cat > src/config/env.ts << 'ENVEOF'
-          export const SUPABASE_URL = '${{ secrets.SUPABASE_URL }}';
-          export const SUPABASE_ANON_KEY = '${{ secrets.SUPABASE_ANON_KEY }}';
-          ENVEOF
-
+        run: |
+          mkdir -p src/config
+          printf "export const SUPABASE_URL = '%s';\nexport const SUPABASE_ANON_KEY = '%s';\n" "${{ secrets.SUPABASE_URL }}" "${{ secrets.SUPABASE_ANON_KEY }}" > src/config/env.ts
       - name: Install npm dependencies (patch-package auto-applied)
         run: npm install --legacy-peer-deps
-
       - name: Grant execute permission to gradlew
         run: chmod +x android/gradlew
-
       - name: Build Debug APK
         run: cd android && ./gradlew assembleDebug --no-daemon
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
-
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
