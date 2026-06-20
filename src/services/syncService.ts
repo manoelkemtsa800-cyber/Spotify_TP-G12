@@ -11,7 +11,7 @@ export async function queueSyncAction(
   payload: object,
 ): Promise<void> {
   const db = getDB();
-  db.execute(
+  await db.execute(
     'INSERT INTO sync_queue (action_type, payload, created_at) VALUES (?, ?, ?)',
     [actionType, JSON.stringify(payload), new Date().toISOString()],
   );
@@ -19,15 +19,15 @@ export async function queueSyncAction(
 
 export async function processSyncQueue(): Promise<{success: number; failed: number}> {
   const db = getDB();
-  const result = db.execute('SELECT * FROM sync_queue ORDER BY created_at ASC');
-  const rows = result.rows?._array ?? [];
+  const result = await db.execute('SELECT * FROM sync_queue ORDER BY created_at ASC');
+  const rows = result.rows ?? [];
   let success = 0;
   let failed = 0;
 
   for (const row of rows) {
     try {
-      await executeAction(row.action_type, JSON.parse(row.payload));
-      db.execute('DELETE FROM sync_queue WHERE id = ?', [row.id]);
+      await executeAction(row.action_type as string, JSON.parse(row.payload as string));
+      await db.execute('DELETE FROM sync_queue WHERE id = ?', [row.id]);
       success++;
     } catch {
       failed++;

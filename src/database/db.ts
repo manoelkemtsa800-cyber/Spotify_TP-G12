@@ -10,7 +10,7 @@ export function getDB(): DB {
 }
 
 function createTables(db: DB) {
-  db.execute(`
+  db.executeSync(`
     CREATE TABLE IF NOT EXISTS downloaded_tracks (
       track_id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
@@ -23,7 +23,7 @@ function createTables(db: DB) {
     );
   `);
 
-  db.execute(`
+  db.executeSync(`
     CREATE TABLE IF NOT EXISTS sync_queue (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       action_type TEXT NOT NULL,

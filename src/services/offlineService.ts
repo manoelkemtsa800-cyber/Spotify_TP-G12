@@ -44,7 +44,7 @@ export async function downloadTrackForOffline(
   }
 
   const db = getDB();
-  db.execute(
+  await db.execute(
     `INSERT OR REPLACE INTO downloaded_tracks
      (track_id, title, artist, album, duration_seconds, cover_local_path, audio_local_path, downloaded_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -58,26 +58,28 @@ export async function downloadTrackForOffline(
 
 export async function removeDownloadedTrack(trackId: string): Promise<void> {
   const db = getDB();
-  const result = db.execute(
+  const result = await db.execute(
     'SELECT audio_local_path, cover_local_path FROM downloaded_tracks WHERE track_id = ?',
     [trackId],
   );
-  const row = result.rows?._array[0];
+  const row = result.rows[0];
   if (row) {
-    if (await RNFS.exists(row.audio_local_path)) await RNFS.unlink(row.audio_local_path);
-    if (row.cover_local_path && await RNFS.exists(row.cover_local_path)) {
-      await RNFS.unlink(row.cover_local_path);
+    const audioPath = row.audio_local_path as string;
+    const coverPath = row.cover_local_path as string | null;
+    if (await RNFS.exists(audioPath)) await RNFS.unlink(audioPath);
+    if (coverPath && await RNFS.exists(coverPath)) {
+      await RNFS.unlink(coverPath);
     }
   }
-  db.execute('DELETE FROM downloaded_tracks WHERE track_id = ?', [trackId]);
+  await db.execute('DELETE FROM downloaded_tracks WHERE track_id = ?', [trackId]);
 }
 
 export async function getDownloadedTracks(): Promise<DownloadedTrack[]> {
   const db = getDB();
-  const result = db.execute(
+  const result = await db.execute(
     'SELECT * FROM downloaded_tracks ORDER BY downloaded_at DESC',
   );
-  return (result.rows?._array ?? []).map((row: any) => ({
+  return (result.rows ?? []).map((row: any) => ({
     track_id: row.track_id,
     local_file_path: row.audio_local_path,
     downloaded_at: row.downloaded_at,
@@ -86,12 +88,12 @@ export async function getDownloadedTracks(): Promise<DownloadedTrack[]> {
 
 export async function getLocalPathIfDownloaded(trackId: string): Promise<string | null> {
   const db = getDB();
-  const result = db.execute(
+  const result = await db.execute(
     'SELECT audio_local_path FROM downloaded_tracks WHERE track_id = ?',
     [trackId],
   );
-  const rows = result.rows?._array ?? [];
-  return rows.length > 0 ? rows[0].audio_local_path : null;
+  const rows = result.rows ?? [];
+  return rows.length > 0 ? (rows[0].audio_local_path as string) : null;
 }
 
 export async function isTrackDownloaded(trackId: string): Promise<boolean> {
