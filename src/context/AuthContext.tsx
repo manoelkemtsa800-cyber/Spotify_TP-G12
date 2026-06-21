@@ -31,13 +31,18 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
   }, []);
 
   async function init() {
-    const {data} = await supabase.auth.getSession();
-    setSession(data.session);
-    if (!data.session) {
-      const existingGuestId = await AsyncStorage.getItem(GUEST_ID_KEY);
-      if (existingGuestId) setGuestId(existingGuestId);
+    try {
+      const {data} = await supabase.auth.getSession();
+      setSession(data.session);
+      if (!data.session) {
+        const existingGuestId = await AsyncStorage.getItem(GUEST_ID_KEY);
+        if (existingGuestId) setGuestId(existingGuestId);
+      }
+    } catch (err) {
+      console.error('Erreur initialisation auth:', err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function signUp(email: string, password: string) {
