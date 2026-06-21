@@ -1,18 +1,30 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {View, Text, Image, TouchableOpacity, StyleSheet, Alert, ActivityIndicator} from 'react-native';
 import Slider from '@react-native-community/slider';
-import {useProgress} from 'react-native-track-player';
-import TrackPlayer from 'react-native-track-player';
 import {usePlayer} from '../context/PlayerContext';
+import {seekTo, getProgress} from '../services/playerService';
 import {downloadTrackForOffline, isTrackDownloaded} from '../services/offlineService';
 import {useNetworkStatus} from '../hooks/useNetworkStatus';
 
 export default function PlayerScreen() {
   const {currentTrack, isPlaying, togglePlay, next, previous} = usePlayer();
-  const {position, duration} = useProgress(500);
+  const [position, setPosition] = useState(0);
+  const [duration, setDuration] = useState(0);
   const isOnline = useNetworkStatus();
   const [downloading, setDownloading] = useState(false);
   const [dlPercent, setDlPercent] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    intervalRef.current = setInterval(async () => {
+      const progress = await getProgress();
+      setPosition(progress.position);
+      setDuration(progress.duration);
+    }, 500);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [currentTrack]);
 
   if (!currentTrack) {
     return (
@@ -25,19 +37,19 @@ export default function PlayerScreen() {
   async function handleDownload() {
     if (!currentTrack) return;
     if (await isTrackDownloaded(currentTrack.id)) {
-      Alert.alert('Déjà téléchargée', 'Cette piste est déjà disponible hors-ligne.');
+      Alert.alert('Deja telechargee', 'Cette piste est deja disponible hors-ligne.');
       return;
     }
     if (!isOnline) {
-      Alert.alert('Hors-ligne', 'Connexion requise pour télécharger.');
+      Alert.alert('Hors-ligne', 'Connexion requise pour telecharger.');
       return;
     }
     setDownloading(true);
     try {
       await downloadTrackForOffline(currentTrack, setDlPercent);
-      Alert.alert('Succès', 'Piste disponible hors-ligne !');
+      Alert.alert('Succes', 'Piste disponible hors-ligne !');
     } catch (err: any) {
-      Alert.alert('Erreur', err.message ?? 'Échec du téléchargement.');
+      Alert.alert('Erreur', err.message ?? 'Echec du telechargement.');
     } finally {
       setDownloading(false);
       setDlPercent(0);
@@ -71,7 +83,7 @@ export default function PlayerScreen() {
         minimumTrackTintColor="#1DB954"
         maximumTrackTintColor="#444"
         thumbTintColor="#1DB954"
-        onSlidingComplete={v => TrackPlayer.seekTo(v)}
+        onSlidingComplete={v => seekTo(v)}
       />
       <View style={s.timeRow}>
         <Text style={s.timeText}>{fmt(position)}</Text>
