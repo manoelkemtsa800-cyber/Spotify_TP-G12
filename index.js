@@ -1,5 +1,4 @@
 import {AppRegistry, Alert} from 'react-native';
-import TrackPlayer from 'react-native-track-player';
 import App from './App';
 import {name as appName} from './app.json';
 
@@ -12,4 +11,3 @@ ErrorUtils.setGlobalHandler((error, isFatal) => {
 });
 
 AppRegistry.registerComponent(appName, () => App);
-TrackPlayer.registerPlaybackService(() => require('./service'));
