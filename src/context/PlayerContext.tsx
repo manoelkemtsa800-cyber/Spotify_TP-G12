@@ -1,7 +1,13 @@
-import React, {createContext, useContext, useState, useCallback} from 'react';
-import {Event, State, useTrackPlayerEvents} from 'react-native-track-player';
+import React, {createContext, useContext, useState, useCallback, useEffect} from 'react';
 import {Track} from '../types';
-import {playQueue as playQueueService, togglePlayback, skipToNext, skipToPrevious} from '../services/playerService';
+import {
+  playQueue as playQueueService,
+  togglePlayback,
+  skipToNext,
+  skipToPrevious,
+  onPlaybackStateChange,
+  onTrackChange,
+} from '../services/playerService';
 import {getLocalPathIfDownloaded} from '../services/offlineService';
 import {useAuth} from './AuthContext';
 import {useNetworkStatus} from '../hooks/useNetworkStatus';
@@ -27,22 +33,6 @@ export function PlayerProvider({children}: {children: React.ReactNode}) {
   const [queue, setQueue] = useState<Track[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  useTrackPlayerEvents(
-    [Event.PlaybackState, Event.PlaybackActiveTrackChanged],
-    async event => {
-      if (event.type === Event.PlaybackState) {
-        setIsPlaying(event.state === State.Playing);
-      }
-      if (event.type === Event.PlaybackActiveTrackChanged && event.track) {
-        const matched = queue.find(t => t.id === event.track?.id);
-        if (matched) {
-          setCurrentTrack(matched);
-          logListening(matched.id);
-        }
-      }
-    },
-  );
-
   const logListening = useCallback(
     async (trackId: string) => {
       if (!userId) return;
@@ -57,6 +47,20 @@ export function PlayerProvider({children}: {children: React.ReactNode}) {
     [userId, isOnline],
   );
 
+  useEffect(() => {
+    const unsubState = onPlaybackStateChange(playing => {
+      setIsPlaying(playing);
+    });
+    const unsubTrack = onTrackChange((track, _index) => {
+      setCurrentTrack(track);
+      if (track) logListening(track.id);
+    });
+    return () => {
+      unsubState();
+      unsubTrack();
+    };
+  }, [logListening]);
+
   async function playQueue(tracks: Track[], startIndex: number = 0) {
     const localPaths: Record<string, string> = {};
     for (const track of tracks) {
@@ -65,7 +69,6 @@ export function PlayerProvider({children}: {children: React.ReactNode}) {
     }
     await playQueueService(tracks, startIndex, localPaths);
     setQueue(tracks);
-    setCurrentTrack(tracks[startIndex] ?? null);
   }
 
   return (
@@ -86,6 +89,6 @@ export function PlayerProvider({children}: {children: React.ReactNode}) {
 
 export function usePlayer() {
   const ctx = useContext(PlayerContext);
-  if (!ctx) throw new Error('usePlayer doit être utilisé dans PlayerProvider');
+  if (!ctx) throw new Error('usePlayer doit etre utilise dans PlayerProvider');
   return ctx;
 }
