@@ -7,11 +7,16 @@ import {setupPlayer} from './src/services/playerService';
 import {useNetworkStatus} from './src/hooks/useNetworkStatus';
 import {processSyncQueue} from './src/services/syncService';
 
-class ErrorBoundary extends React.Component
-  {children: React.ReactNode},
-  {error: Error | null}
-> {
-  constructor(props: {children: React.ReactNode}) {
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  error: Error | null;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {error: null};
   }
